@@ -1,0 +1,44 @@
+{
+    "name": "lucatume/test-kit",
+    "version": "0.1.0",
+    "type": "library",
+    "description": "Test kit mono-repository",
+    "homepage": "https://theaveragedev.com",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Luca Tumedei",
+            "email": "luca@theavereagedev.com",
+            "homepage": "https://theaveragedev.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=5.6",
+        "zordius/lightncandy": "^1.2"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^6.0",
+        "squizlabs/php_codesniffer": "^3.4"
+    },
+    "autoload": {
+        "files": [
+            "packages/utils/src/path.php",
+            "packages/utils/src/string.php",
+            "packages/utils/src/tests.php"
+        ],
+        "psr-4": {
+            "tad\\StreamWrappers\\": "packages/stream-wrappers/src"
+        }
+    },
+    "autoload-dev": {
+        "files": [
+            "packages/stream-wrappers/tests/_boostrap.php",
+            "packages/utils/tests/_boostrap.php"
+        ]
+    },
+    "replace": {
+        "lucatume/stream-wrappers": "self.version",
+        "lucatume/utils": "self.version"
+    }
+}

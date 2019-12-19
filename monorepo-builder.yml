@@ -1,0 +1,29 @@
+# See https://github.com/Symplify/MonorepoBuilder
+
+parameters:
+  # The following sections of each package composer.json file will be merged in the root composer.json file.
+  merge_sections:
+    - 'require'
+    - 'require-dev'
+    - 'autoload'
+    - 'autoload-dev'
+    - 'repositories'
+  # Where do packages live?
+  package_directories:
+    - 'packages'
+
+  # Added to the root composer.json file only.
+  data_to_append:
+    require:
+      "php": ">=5.6"
+    require-dev:
+      "squizlabs/php_codesniffer": "^3.4"
+
+  # Removed from the root composer.json file only.
+  # data_to_remove:
+
+  # Map this repository directories to the respective repositories.
+  directories_to_repositories:
+    packages/first-package: 'file:///Users/lucatume/Desktop/lucatume/mr-first-package.git'
+    packages/second-package: 'file:///Users/lucatume/Desktop/lucatume/mr-second-package.git'
+    packages/stream-wrappers: 'file:///Users/lucatume/Desktop/lucatume/mr-second-package.git'
