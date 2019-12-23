@@ -580,14 +580,14 @@ abstract class StreamWrapper
         }
 
         if (false === $patchedContents) {
-            $traversed       = StreamWrapper::$traverser->traverse(static::$parser->parse($contents));
+            $traversed       = static::$traverser->traverse(static::$parser->parse($contents));
             $patchedContents = ( new Standard() )->prettyPrint($traversed);
             $patchedContents = '<?php' . PHP_EOL . $patchedContents;
 
             static::$patchedContentsCache->putFileContents($file, $this->getTestMethodName(), $patchedContents);
         }
 
-        StreamWrapper::$run->setLastLoadedFileCode($patchedContents);
+        static::$run->setLastLoadedFileCode($patchedContents);
 
         return $patchedContents;
     }

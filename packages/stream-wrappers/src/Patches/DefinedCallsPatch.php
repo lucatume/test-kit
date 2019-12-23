@@ -8,6 +8,7 @@
 namespace tad\StreamWrappers\Patches;
 
 use PhpParser\Node;
+use tad\StreamWrappers\StreamWrapperException;
 
 /**
  * Class DefinedCallsPatch
@@ -18,10 +19,12 @@ class DefinedCallsPatch extends Patch
 {
     /**
      * @inheritDoc
+     *
+     * @throws StreamWrapperException If the replacement code cannot be parsed or is not of the correct type.
      */
     public function leaveNode(Node $node)
     {
-        if (! ( $node instanceof Node\Expr\FuncCall && $node->name->toString() === 'defined' )) {
+        if (!($node instanceof Node\Expr\FuncCall && $node->name->toString() === 'defined')) {
             return null;
         }
 
@@ -31,6 +34,6 @@ class DefinedCallsPatch extends Patch
             $this->prettyPrintArgs($node->args)
         );
 
-        return $this->parser->parse('<?php' . PHP_EOL . $replace)[0];
+        return $this->getWrappedExpression($replace);
     }
 }

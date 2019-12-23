@@ -9,6 +9,7 @@ namespace tad\StreamWrappers\Patches;
 
 use PhpParser\Node;
 use PhpParser\Node\Expr\Include_;
+use tad\StreamWrappers\StreamWrapperException;
 
 /**
  * Class IncludeRequirePatch
@@ -17,6 +18,12 @@ use PhpParser\Node\Expr\Include_;
  */
 class IncludeRequirePatch extends Patch
 {
+
+    /**
+     * @inheritDoc
+     *
+     * @throws StreamWrapperException If the replacement code cannot be parsed or is not of the correct type.
+     */
     public function leaveNode(Node $node)
     {
         if (!$node instanceof Include_) {
@@ -35,6 +42,6 @@ class IncludeRequirePatch extends Patch
             $this->printer->prettyPrintExpr($node->expr)
         );
 
-        return $this->parser->parse('<?php' . PHP_EOL . $replace);
+        return $this->getWrappedExpression($replace);
     }
 }

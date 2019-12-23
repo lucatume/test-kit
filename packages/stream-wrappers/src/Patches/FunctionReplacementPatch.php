@@ -8,6 +8,7 @@
 namespace tad\StreamWrappers\Patches;
 
 use PhpParser\Node;
+use tad\StreamWrappers\StreamWrapperException;
 
 /**
  * Class FunctionReplacementPatch
@@ -18,6 +19,8 @@ class FunctionReplacementPatch extends Patch
 {
     /**
      * @inheritDoc
+     *
+     * @throws StreamWrapperException If the replacement code cannot be parsed or is not of the correct type.
      */
     public function leaveNode(Node $node)
     {
@@ -34,6 +37,6 @@ class FunctionReplacementPatch extends Patch
             $this->prettyPrintArgs($node->args)
         );
 
-        return $this->parser->parse('<?php' . PHP_EOL . $replace)[0];
+        return $this->getWrappedExpression($replace);
     }
 }

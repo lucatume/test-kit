@@ -9,6 +9,7 @@ namespace tad\StreamWrappers\Patches;
 
 use PhpParser\Node;
 use PhpParser\Node\Expr\ConstFetch;
+use tad\StreamWrappers\StreamWrapperException;
 
 /**
  * Class ConstantAccessPatch
@@ -19,6 +20,8 @@ class ConstantAccessPatch extends Patch
 {
     /**
      * @inheritDoc
+     *
+     * @throws StreamWrapperException If the replacement code cannot be parsed or is not of the correct type.
      */
     public function leaveNode(Node $node)
     {
@@ -52,6 +55,6 @@ class ConstantAccessPatch extends Patch
             $const
         );
 
-        return $this->parser->parse('<?php' . PHP_EOL . $replace)[0];
+        return $this->getWrappedExpression($replace);
     }
 }

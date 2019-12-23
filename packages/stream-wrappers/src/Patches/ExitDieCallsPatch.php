@@ -8,6 +8,7 @@
 namespace tad\StreamWrappers\Patches;
 
 use PhpParser\Node;
+use tad\StreamWrappers\StreamWrapperException;
 
 /**
  * Class ExitDieCallsPatch
@@ -21,6 +22,8 @@ class ExitDieCallsPatch extends Patch
 
     /**
      * @inheritDoc
+     *
+     * @throws StreamWrapperException If the replacement code cannot be parsed or is not of the correct type.
      */
     public function leaveNode(Node $node)
     {
@@ -34,6 +37,6 @@ class ExitDieCallsPatch extends Patch
             empty($node->expr) ? '0' : $this->printer->prettyPrintExpr($node->expr)
         );
 
-        return $this->parser->parse('<?php' . PHP_EOL . $replace)[0];
+        return $this->getWrappedExpression($replace);
     }
 }

@@ -13,6 +13,7 @@ use PhpParser\Parser;
 use PhpParser\PrettyPrinter\Standard;
 use PhpParser\PrettyPrinterAbstract;
 use tad\StreamWrappers\Run;
+use tad\StreamWrappers\StreamWrapperException;
 
 /**
  * Class Patch
@@ -131,5 +132,22 @@ abstract class Patch extends NodeVisitorAbstract
         return implode(', ', array_map(function (Node\Arg $arg) {
             return $this->printer->prettyPrint([ $arg ]);
         }, $args));
+    }
+
+    protected function getWrappedExpression(string $replace)
+    {
+        $stmts = $this->parser->parse('<?php' . PHP_EOL . $replace);
+
+        if ($stmts === null || !is_array($stmts)) {
+            throw new StreamWrapperException('Could not parse patched code: ' . $replace);
+        }
+
+        $wrappedExpr = $stmts[0];
+
+        if (!isset($wrappedExpr->expr) && $wrappedExpr->expr instanceof Node\Expr) {
+            throw new StreamWrapperException('Wrapped node is not an expression.');
+        }
+
+        return $wrappedExpr->expr;
     }
 }

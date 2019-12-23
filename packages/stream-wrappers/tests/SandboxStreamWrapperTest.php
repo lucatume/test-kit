@@ -202,4 +202,23 @@ class SandboxStreamWrapperTest extends TestCase
 
         $this->assertEquals('test test test', $run->getOutput());
     }
+
+    /**
+     * It should not displace lines during debug
+     *
+     * @test
+     */
+    public function should_not_displace_lines_during_debug()
+    {
+        /** @noinspection ForgottenDebugOutputInspection */
+        if (! ( function_exists('xdebug_is_enabled') && xdebug_is_enabled() )) {
+            $this->markTestSkipped('This test should not run if XDebug is not enabled.');
+        }
+
+        $file = data('wrap/file_w_lotsa_empty_lines.php');
+
+        $wrapper = new SandboxStreamWrapper();
+        $wrapper->setWhitelist([data('wrap')]);
+        $run = $wrapper->run($file);
+    }
 }
