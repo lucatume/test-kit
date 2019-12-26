@@ -85,6 +85,7 @@ class IncludedFilesStreamWrapperTest extends TestCase
         $file = data('wrap/file_1.php');
 
         $wrapper = new IncludedFilesStreamWrapper;
+        $wrapper->setPatchedContentsCache(new ArrayContentsCache());
         $code    = '$include3 = true;';
 
         $wrapper->getIncludedFiles($file, $code);

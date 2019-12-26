@@ -204,21 +204,19 @@ class SandboxStreamWrapperTest extends TestCase
     }
 
     /**
-     * It should not displace lines during debug
+     * It should preserve line formatting when patching code
      *
      * @test
      */
-    public function should_not_displace_lines_during_debug()
+    public function should_preserve_line_formatting_when_patching_code()
     {
-        /** @noinspection ForgottenDebugOutputInspection */
-        if (! ( function_exists('xdebug_is_enabled') && xdebug_is_enabled() )) {
-            $this->markTestSkipped('This test should not run if XDebug is not enabled.');
-        }
-
         $file = data('wrap/file_w_lotsa_empty_lines.php');
 
         $wrapper = new SandboxStreamWrapper();
         $wrapper->setWhitelist([data('wrap')]);
         $run = $wrapper->run($file);
+        $lastLoadedFilePatchedCode = $run->getLastLoadedFilePatchedCode();
+
+        $this->assertStringEqualsFile($file, $lastLoadedFilePatchedCode);
     }
 }

@@ -2,19 +2,19 @@
 /**
  * File-based contents cache.
  *
- * @package tad\StreamWrappers
+ * @package tad\StreamWrappers\Cache
  */
 
-namespace tad\StreamWrappers;
+namespace tad\StreamWrappers\Cache;
 
 use function tad\functions\pathJoin;
 
 /**
  * Class ContentsCache
  *
- * @package tad\StreamWrappers
+ * @package tad\StreamWrappers\Cache
  */
-class ContentsCache
+class ContentsCache implements CacheInterface
 {
     /**
      * The root cache seed for this instance.
@@ -43,6 +43,13 @@ class ContentsCache
      * @var array<string,string>
      */
     protected $cached;
+
+    /**
+     * The absolute path to the last patched file.
+     *
+     * @var string
+     */
+    protected $lastPatchedFilePath;
 
     /**
      * ContentsCache constructor.
@@ -100,7 +107,7 @@ class ContentsCache
         $filemtime = file_exists($file) ? filemtime($file) : false;
 
         if ($filemtime === false) {
-        	// If file modification time is not readable, then always refresh.
+            // If file modification time is not readable, then always refresh.
             $filemtime = microtime();
         }
 
@@ -132,14 +139,14 @@ class ContentsCache
     public function putFileContents($file, $hash, $data)
     {
         $filename = $this->getFileName($file, $hash);
-
         $this->cached[$file] = $filename;
-
         $put = file_put_contents($filename, $data);
 
         if ($put === false) {
             return false;
         }
+
+        $this->lastPatchedFilePath = $filename;
 
         return $filename;
     }
@@ -172,5 +179,15 @@ class ContentsCache
     public function getHits()
     {
         return $this->hits;
+    }
+
+    /**
+     * Returns the path to the last patched file.
+     *
+     * @return string The path to the last patched file.
+     */
+    public function getLastPatchedFilePath()
+    {
+        return $this->lastPatchedFilePath;
     }
 }

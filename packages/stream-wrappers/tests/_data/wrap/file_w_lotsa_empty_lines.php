@@ -6,9 +6,6 @@
 
 namespace Acme;
 
-/** @noinspection ForgottenDebugOutputInspection */
-xdebug_break();
-
 /**
  * First function doc-block.
  *
@@ -23,7 +20,6 @@ function first(){
 	return 'first';
 
 }
-
 
 // Note the 2 empty lines above this one.
 function second(){

@@ -110,7 +110,12 @@ class IncludedFilesStreamWrapper extends SandboxStreamWrapper
 	    return $thisRun;
     }
 
-	/**
+    public function setPatchedContentsCache(ArrayContentsCache $param)
+    {
+       $this->patchhhh
+    }
+
+    /**
      * Overrides the parent method to handle prefix code.
      *
      * @param string $contents The contents to patch.

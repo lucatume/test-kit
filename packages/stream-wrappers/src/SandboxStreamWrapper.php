@@ -9,6 +9,7 @@
 namespace tad\StreamWrappers;
 
 use PhpParser\NodeTraverserInterface;
+use PhpParser\NodeVisitor\CloningVisitor;
 use PhpParser\NodeVisitor\NameResolver;
 use tad\StreamWrappers\Http\Header;
 use tad\StreamWrappers\MockFactories\ProphecyMockFactory;
@@ -84,7 +85,9 @@ class SandboxStreamWrapper extends StreamWrapper
         static::unwrap();
 
         static::$run->setOutput(ob_get_clean());
+
 //        static::$run->snapshotEnv('after');
+
         $thisRun = static::$run;
         static::$run = null;
 
@@ -184,7 +187,7 @@ class SandboxStreamWrapper extends StreamWrapper
     {
         $implode = implode(
             PHP_EOL,
-            array_slice(explode(PHP_EOL, static::$run->getLastLoadedFileCode()), $line - 10, 20)
+            array_slice(explode(PHP_EOL, static::$run->getLastLoadedFilePatchedCode()), $line - 10, 20)
         );
 
         return $implode;
@@ -428,7 +431,8 @@ class SandboxStreamWrapper extends StreamWrapper
     protected function setupTraverser(NodeTraverserInterface $traverser)
     {
         $var = $this->getGlobalVarName();
-        $traverser->addVisitor(new NameResolver());
+        $traverser->addVisitor(new CloningVisitor());
+        $traverser->addVisitor(new NameResolver(null, ['replaceNodes' => false]));
         $traverser->addVisitor(new DefineCallsPatch($var, static::$run, static::$parser, static::$printer));
         $traverser->addVisitor(new DefinedCallsPatch($var, static::$run, static::$parser, static::$printer));
         $traverser->addVisitor(new ConstantAccessPatch($var, static::$run, static::$parser, static::$printer));

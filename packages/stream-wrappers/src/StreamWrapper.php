@@ -11,11 +11,13 @@
 
 namespace tad\StreamWrappers;
 
+use PhpParser\Lexer;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeTraverserInterface;
 use PhpParser\Parser;
-use PhpParser\ParserFactory;
-use PhpParser\PrettyPrinter\Standard;
+use PhpParser\PrettyPrinter\Standard as Printer;
+use tad\StreamWrappers\Cache\CacheInterface;
+use tad\StreamWrappers\Cache\ContentsCache;
 use tad\Utils\Traits\WithTestNames;
 use function tad\functions\isDebug;
 
@@ -52,13 +54,6 @@ abstract class StreamWrapper
      */
     protected static $run;
 
-    /*
-     * The code printer that should be used to print and format the code.
-     *
-     * @var PrettyPrinterAbstract
-     */
-    protected static $printer;
-
     /**
      * The traverser used to traverse nodes.
      *
@@ -67,9 +62,25 @@ abstract class StreamWrapper
     protected static $traverser;
 
     /**
+     * The contents cache shared by all stream wrappers.
+     *
      * @var ContentsCache
      */
     protected static $patchedContentsCache;
+
+    /**
+     * The lexer instance shared by all stream wrappers.
+     *
+     * @var Lexer\Emulative
+     */
+    protected static $lexer;
+
+    /*
+     * The code printer that will be used to print and format the code.
+     *
+     * @var PrettyPrinterAbstract
+     */
+    protected static $printer;
 
     /**
      * The current stream context.
@@ -84,6 +95,20 @@ abstract class StreamWrapper
      * @var resource
      */
     public $resource;
+
+    /**
+     * Whether patch cache is enabled or not.
+     *
+     * @var bool
+     */
+    protected $patchCacheEnabled = false;
+
+    /**
+     * The current object cache instance.
+     *
+     * @var CacheInterface
+     */
+    protected $cache;
 
     /**
      * Returns the current shared instance of the Run object.
@@ -158,10 +183,10 @@ abstract class StreamWrapper
      */
     protected function openAndTransform($path)
     {
-        $resource = fopen('php://memory', 'rb+');
         $contents = file_get_contents($path, true);
         $contents = $this->patch($contents);
 
+        $resource = fopen('php://memory', 'rb+');
         fwrite($resource, $contents);
         rewind($resource);
 
@@ -574,19 +599,22 @@ abstract class StreamWrapper
     {
         $patchedContents  = false;
         $file = static::$run->getLastLoadedFile();
+        $hash = static::$run->hash();
 
-        if (!isDebug()) {
-            $patchedContents = static::$patchedContentsCache->getFileContentsFor($file, static::$run->hash());
+        if (!isDebug() && $this->patchCacheEnabled) {
+            $patchedContents = static::$patchedContentsCache->getFileContentsFor($file, $hash);
         }
 
         if (false === $patchedContents) {
             $traversed       = static::$traverser->traverse(static::$parser->parse($contents));
-            $patchedContents = ( new Standard() )->prettyPrint($traversed);
-            $patchedContents = '<?php' . PHP_EOL . $patchedContents;
+            $oldStmts = static::$parser->parse($contents);
+            $oldTokens = static::$lexer->getTokens();
+            $patchedContents = static::$printer->printFormatPreserving($traversed, $oldStmts, $oldTokens);
 
-            static::$patchedContentsCache->putFileContents($file, $this->getTestMethodName(), $patchedContents);
+            static::$patchedContentsCache->putFileContents($file, $hash, $patchedContents);
         }
 
+        static::$run->setLastPatchedFileCachePath(static::$patchedContentsCache->getFileName($file, $hash));
         static::$run->setLastLoadedFileCode($patchedContents);
 
         return $patchedContents;
@@ -599,11 +627,11 @@ abstract class StreamWrapper
      */
     protected function initSharedProps()
     {
+        $this->initPhpParser();
         static::$run       = static::$run instanceof Run ? static::$run : new Run();
-        static::$parser    = ( new ParserFactory() )->create(ParserFactory::PREFER_PHP5);
-        static::$printer   = new Standard();
+        static::$printer   = new Printer();
         static::$traverser = new NodeTraverser();
-        static::$patchedContentsCache = new ContentsCache(static::class);
+        $this->initContentsCache();
         $this->setupTraverser(static::$traverser);
     }
 
@@ -619,5 +647,30 @@ abstract class StreamWrapper
     public function callFunc($fn, ...$args)
     {
         return static::$run->getFunctionReplacement($fn)(...$args);
+    }
+
+    /**
+     * Inits the PHP parser and lexer instances all stream wrapper instances will share in the context of a run.
+     */
+    protected function initPhpParser()
+    {
+        static::$lexer = new Lexer\Emulative([
+            'usedAttributes' => [
+                'comments', 'startLine', 'endLine', 'startTokenPos', 'endTokenPos'
+            ]
+        ]);
+
+        static::$parser = new Parser\Php7(static::$lexer);
+    }
+
+    protected function initContentsCache()
+    {
+        if ($this->cache instanceof CacheInterface) {
+            static::$patchedContentsCache = $this->cache;
+
+            return;
+        }
+
+        static::$patchedContentsCache = new ContentsCache(static::class);
     }
 }

@@ -108,6 +108,13 @@ class Run
     protected $hash;
 
     /**
+     * The path to last patched file cached contents.
+     *
+     * @var string
+     */
+    protected $lastPatchedFileCachePath;
+
+    /**
      * Adds a file to those included during the stream wrapper run.
      *
      * @param string $file The included file path.
@@ -373,7 +380,7 @@ class Run
      *
      * @return string The last loaded file patched code.
      */
-    public function getLastLoadedFileCode()
+    public function getLastLoadedFilePatchedCode()
     {
         return $this->lastLoadedFileCode;
     }
@@ -457,6 +464,26 @@ class Run
         }
 
         return $this->replacedFunctions[$fn];
+    }
+
+    /**
+     * Returns the path to the last patched file cached contents file.
+     *
+     * @return string The path to the last patched file cached contents file.
+     */
+    public function getLastPatchedFileCachePath(): string
+    {
+        return $this->lastPatchedFileCachePath;
+    }
+
+    /**
+     * Sets the path to the last patched file cached contents file.
+     *
+     * @param string $fileName The path to the last patched file cached contents file.
+     */
+    public function setLastPatchedFileCachePath(string $fileName)
+    {
+        $this->lastPatchedFileCachePath = $fileName;
     }
 
     /**
