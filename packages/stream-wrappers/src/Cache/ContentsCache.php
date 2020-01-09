@@ -2,17 +2,17 @@
 /**
  * File-based contents cache.
  *
- * @package tad\StreamWrappers\Cache
+ * @package lucatume\StreamWrappers\Cache
  */
 
-namespace tad\StreamWrappers\Cache;
+namespace lucatume\StreamWrappers\Cache;
 
-use function tad\functions\pathJoin;
+use function lucatume\functions\pathJoin;
 
 /**
  * Class ContentsCache
  *
- * @package tad\StreamWrappers\Cache
+ * @package lucatume\StreamWrappers\Cache
  */
 class ContentsCache implements CacheInterface
 {

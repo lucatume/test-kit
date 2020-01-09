@@ -2,15 +2,15 @@
 /**
  * A special version of an header, the HTTP one.
  *
- * @package tad\StreamWrappers\Http
+ * @package lucatume\StreamWrappers\Http
  */
 
-namespace tad\StreamWrappers\Http;
+namespace lucatume\StreamWrappers\Http;
 
 /**
  * Class HttpHeader
  *
- * @package tad\StreamWrappers\Http
+ * @package lucatume\StreamWrappers\Http
  */
 class HttpHeader extends Header
 {

@@ -4,19 +4,19 @@
  *
  * @link https://github.com/phpspec/prophecy
  *
- * @package tad\StreamWrappers
+ * @package lucatume\StreamWrappers
  */
 
-namespace tad\StreamWrappers\MockFactories;
+namespace lucatume\StreamWrappers\MockFactories;
 
 use Prophecy\Argument;
 use Prophecy\Prophet;
-use function tad\functions\slug;
+use function lucatume\functions\slug;
 
 /**
  * Class ProphecyMockFactory
  *
- * @package tad\StreamWrappers\MockFactories
+ * @package lucatume\StreamWrappers\MockFactories
  */
 class ProphecyMockFactory
 {

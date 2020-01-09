@@ -5,13 +5,13 @@
  * @since TBD
  */
 
-namespace tad\StreamWrappers\Cache;
+namespace lucatume\StreamWrappers\Cache;
 
 
 /**
  * Class ContentsCache
  *
- * @package tad\StreamWrappers\Cache
+ * @package lucatume\StreamWrappers\Cache
  */
 interface CacheInterface
 {

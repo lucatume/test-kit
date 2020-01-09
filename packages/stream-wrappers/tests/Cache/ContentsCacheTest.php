@@ -1,22 +1,14 @@
 <?php
-/**
- * ${CARET}
- *
- * @since   TBD
- *
- * @package tad\StreamWrappers
- */
+namespace lucatume\StreamWrappers\Cache;
 
-namespace tad\StreamWrappers;
-
+use lucatume\Utils\Traits\WithTestNames;
 use PHPUnit\Framework\TestCase;
-use tad\Utils\Traits\WithTestNames;
-use function tad\functions\data;
-use function tad\functions\pathJoin;
+use function lucatume\functions\data;
+use function lucatume\functions\pathJoin;
 
 class ContentsCacheTest extends TestCase
 {
-	use WithTestNames;
+    use WithTestNames;
 
     /**
      * It should return false when trying to get uncached file
@@ -40,7 +32,7 @@ class ContentsCacheTest extends TestCase
         $cache = new ContentsCache(__METHOD__, $this->methodCacheDir(__METHOD__));
 
         $patchedContents  = '<?php echo "bar";';
-        $cache->putFileContents(__FILE__, $this->getTestMethodName(),$patchedContents);
+        $cache->putFileContents(__FILE__, $this->getTestMethodName(), $patchedContents);
 
         $this->assertEquals($patchedContents, $cache->getFileContentsFor(__FILE__, $this->getTestMethodName()));
     }
@@ -55,7 +47,7 @@ class ContentsCacheTest extends TestCase
         $cache = new ContentsCache(__METHOD__, $this->methodCacheDir(__METHOD__));
 
         $patchedContents  = '<?php echo "bar";';
-        $cacheFile = $cache->putFileContents(__FILE__, $this->getTestMethodName(),$patchedContents);
+        $cacheFile = $cache->putFileContents(__FILE__, $this->getTestMethodName(), $patchedContents);
 
         unlink($cacheFile);
 
@@ -72,7 +64,7 @@ class ContentsCacheTest extends TestCase
         $cache = new ContentsCache(__METHOD__, $this->methodCacheDir(__METHOD__));
 
         $patchedContents  = '<?php echo "bar";';
-        $cacheFile = $cache->putFileContents(__FILE__, $this->getTestMethodName(),$patchedContents);
+        $cacheFile = $cache->putFileContents(__FILE__, $this->getTestMethodName(), $patchedContents);
 
         $this->assertEquals([__FILE__ => $cacheFile], $cache->getCachedFiles());
     }
@@ -87,7 +79,7 @@ class ContentsCacheTest extends TestCase
         $cache = new ContentsCache(__METHOD__, $this->methodCacheDir(__METHOD__));
 
         $patchedContents  = '<?php echo "bar";';
-        $cacheFile = $cache->putFileContents(__FILE__, $this->getTestMethodName(),$patchedContents);
+        $cacheFile = $cache->putFileContents(__FILE__, $this->getTestMethodName(), $patchedContents);
 
         $cache->getFileContentsFor(__FILE__, $this->getTestMethodName());
 
@@ -103,14 +95,14 @@ class ContentsCacheTest extends TestCase
     {
         $cache = new ContentsCache(__METHOD__, $this->methodCacheDir(__METHOD__));
 
-	    $canary    = data( 'wrap/canary.php' );
-	    $cacheFile = $cache->getFileName( $canary, $this->getTestMethodName());
-        $cache->getFileContentsFor( $canary, $this->getTestMethodName());
+        $canary    = data('wrap/canary.php');
+        $cacheFile = $cache->getFileName($canary, $this->getTestMethodName());
+        $cache->getFileContentsFor($canary, $this->getTestMethodName());
 
         $this->assertEquals([$canary => $cacheFile], $cache->getMisses());
     }
 
-   protected function methodCacheDir($method)
+    protected function methodCacheDir($method)
     {
         return pathJoin(sys_get_temp_dir(), md5($method));
     }

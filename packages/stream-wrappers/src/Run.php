@@ -3,37 +3,40 @@
  * Represents the stream wrapping operation meta data, collected from all the stream wrapper instances part of a
  * cohesive stream wrapping "run".
  *
- * @package tad\StreamWrappers
+ * @package lucatume\StreamWrappers
  */
 
-namespace tad\StreamWrappers;
+namespace lucatume\StreamWrappers;
 
+use lucatume\StreamWrappers\Http\Header;
+use lucatume\Utils\Traits\WithTestNames;
 use SebastianBergmann\GlobalState\Snapshot;
-use tad\StreamWrappers\Http\Header;
-use tad\Utils\Traits\WithTestNames;
-use function tad\functions\pathNormalize;
-use function tad\functions\pathResolve;
+use function lucatume\functions\pathNormalize;
+use function lucatume\functions\pathResolve;
 
 /**
  * Class Run
  *
- * @package tad\StreamWrappers
+ * @package lucatume\StreamWrappers
  */
-class Run
+class Run implements FileStreamWrappingRunResultInterface
 {
     use WithTestNames;
 
     const FILE_EXIT_DEFAULT = 'Stream_Wrapper_Run_File_Did_Not_Exit';
+
     /**
-     * @var Header[] A collection of headers sent during the file inclusion, if any.
+     * @var array<Header> A collection of headers sent during the file inclusion, if any.
      */
     protected $sentHeaders = [];
+
     /**
      * A set of snapshots of the defined constants, globals and environment vars taken at diff. steps of the run.
      *
      * @var Snapshot[]
      */
     protected $snapshots;
+
     /**
      * An array of constants that will be defined before the file is loaded.
      *
@@ -168,11 +171,11 @@ class Run
         $prev = array_search($header->getName(), $this->sentHeaders, true);
 
         if ($prev && $replace) {
-            $this->sentHeaders[$prev] = $header;
+            $this->sentHeaders[$prev] = [$header];
             return;
         }
 
-        $this->sentHeaders[$header->getName()] = $header;
+        $this->sentHeaders[$header->getName()][] = $header;
     }
 
     /**
@@ -212,7 +215,9 @@ class Run
      */
     public function addReplacedConstant($name)
     {
-        $this->replacedConstants[] = $name;
+        if (!in_array($name,$this->replacedConstants,true)) {
+            $this->replacedConstants[] = $name;
+        }
     }
 
     /**
@@ -242,13 +247,21 @@ class Run
     /**
      * Returns an associative list of headers sent by the file during load.
      *
-     * @return array An associative list of headers sent by the file during load.
+     * @return array<string,array> An associative list of headers sent by the file during load, each one an array of
+     *                             strings for each header value.
      */
     public function getSentHeaders()
     {
-        return array_reduce($this->sentHeaders, static function ($headers, Header $header) {
-            $headers[$header->getName()] = $header->getValue();
-            return $headers;
+        return array_reduce($this->sentHeaders, static function ($acc, array $headers) {
+            $first = reset($headers);
+
+            if ($first !== false) {
+                $acc[$first->getName()] = array_map(static function (Header $header) {
+                    return $header->getValue();
+                }, $headers);
+            }
+
+            return $acc;
         }, []);
     }
 
@@ -268,7 +281,7 @@ class Run
      *
      * @return int|string The last sent response code, or `200` if no response code was returned.
      */
-    public function getSentResponsCode()
+    public function getSentResponseCode()
     {
         if (empty($this->sentHeaders)) {
             return null;
@@ -278,9 +291,11 @@ class Run
             return $this->sentHeaders['HTTP']->getResponseCode();
         }
 
-        $codes = array_map(static function (Header $header) {
-            return $header->getResponseCode();
-        }, $this->sentHeaders);
+        $codes = array_filter(array_merge(...array_values(array_map(static function (array $headers) {
+            return array_map(static function (Header $header) {
+                return $header->getResponseCode();
+            }, $headers);
+        }, $this->sentHeaders))));
 
         return end($codes) ?: 200;
     }

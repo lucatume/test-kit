@@ -2,19 +2,19 @@
 /**
  * Replaces calls to `(include|require)(_once)*` in instruction and function form.
  *
- * @package tad\StreamWrappers\Patches
+ * @package lucatume\StreamWrappers\Patches
  */
 
-namespace tad\StreamWrappers\Patches;
+namespace lucatume\StreamWrappers\Patches;
 
 use PhpParser\Node;
 use PhpParser\Node\Expr\Include_;
-use tad\StreamWrappers\StreamWrapperException;
+use lucatume\StreamWrappers\StreamWrapperException;
 
 /**
  * Class IncludeRequirePatch
  *
- * @package tad\StreamWrappers\Patches
+ * @package lucatume\StreamWrappers\Patches
  */
 class IncludeRequirePatch extends Patch
 {

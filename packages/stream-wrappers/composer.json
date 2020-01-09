@@ -4,7 +4,6 @@
   "version": "0.1.0",
   "require": {
     "php": ">=7.0",
-	"lucatume/utils": "~1.0",
     "nikic/php-parser": "~4.0"
   },
   "require-dev": {
@@ -12,7 +11,7 @@
   },
   "autoload": {
     "psr-4": {
-      "tad\\StreamWrappers\\": "src"
+      "lucatume\\StreamWrappers\\": "src"
     }
   },
   "autoload-dev": {

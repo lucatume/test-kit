@@ -2,17 +2,19 @@
 /**
  * Wraps a file to list the files that file included or required.
  *
- * @package tad\StreamWrappers
+ * @package lucatume\StreamWrappers
  */
 
-namespace tad\StreamWrappers;
+namespace lucatume\StreamWrappers;
 
-use function tad\functions\pathResolve;
+use lucatume\StreamWrappers\Cache\CacheInterface;
+use lucatume\StreamWrappers\Cache\ContentsCache;
+use function lucatume\functions\pathResolve;
 
 /**
  * Class IncludedFilesStreamWrapper
  *
- * @package tad\StreamWrappers
+ * @package lucatume\StreamWrappers
  */
 class IncludedFilesStreamWrapper extends SandboxStreamWrapper
 {
@@ -29,6 +31,13 @@ class IncludedFilesStreamWrapper extends SandboxStreamWrapper
      * @var string
      */
     protected static $targetFile;
+
+    /**
+     * The current patched contents cache provider.
+     *
+     * @var ContentsCache
+     */
+    protected $patchedContentCache;
 
     /**
      * Overrides the sandbox wrapper method to only log included files, not actually include them.
@@ -72,7 +81,7 @@ class IncludedFilesStreamWrapper extends SandboxStreamWrapper
      */
     public function getIncludedFiles($file, $prefixCode = null)
     {
-        return array_column($this->run($file, $prefixCode)->getIncludedFiles(), 'file');
+        return array_column($this->loadFile($file, $prefixCode)->getIncludedFiles(), 'file');
     }
 
     /**
@@ -87,7 +96,7 @@ class IncludedFilesStreamWrapper extends SandboxStreamWrapper
      *
      * @throws StreamWrapperException If the file cannot be found.
      */
-    public function run($file, $prefixCode = null)
+    public function loadFile($file, $prefixCode = null)
     {
         static::$prefixCode = $prefixCode;
         $this->initSharedProps();
@@ -104,15 +113,20 @@ class IncludedFilesStreamWrapper extends SandboxStreamWrapper
         static::wrap();
         include $file;
         static::unwrap();
-	    $thisRun = static::$run;
-	    static::$run = null;
+        $thisRun = static::$run;
+        static::$run = null;
 
-	    return $thisRun;
+        return $thisRun;
     }
 
-    public function setPatchedContentsCache(ArrayContentsCache $param)
+    /**
+     * Sets the patched contents cache instance to use.
+     *
+     * @param  CacheInterface $contentsCache
+     */
+    public function setPatchedContentsCache(CacheInterface $contentsCache)
     {
-       $this->patchhhh
+        $this->patchedContentCache = $contentsCache;
     }
 
     /**

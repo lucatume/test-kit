@@ -1,4 +1,22 @@
-# WP Streams - Sandboxed WordPress for testing
+# Beaker
+
+WordPress testing without the cruft.  
+Or "get started testing WordPress projects as fast as possible".
+
+## Code pitch
+
+```php
+use PHPUnit\Framework\TestCase;
+use lucatume\Beaker\Beaker;
+
+class Beaker_Test extends TestCase{
+    public function test_homepage_html(){
+        $homepage = Beaker::fromDir('~/Sites/wp') ->get('/');
+
+        $this->assertHtmlElement('body.home', $homepage->html());
+    }
+}
+```
 
 ## Requirements
 

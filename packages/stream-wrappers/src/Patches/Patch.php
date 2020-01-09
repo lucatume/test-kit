@@ -2,23 +2,23 @@
 /**
  * Represents a code patch applied to the wrapped code.
  *
- * @package tad\StreamWrappers\Patches
+ * @package lucatume\StreamWrappers\Patches
  */
 
-namespace tad\StreamWrappers\Patches;
+namespace lucatume\StreamWrappers\Patches;
 
 use PhpParser\Node;
 use PhpParser\NodeVisitorAbstract;
 use PhpParser\Parser;
 use PhpParser\PrettyPrinter\Standard;
 use PhpParser\PrettyPrinterAbstract;
-use tad\StreamWrappers\Run;
-use tad\StreamWrappers\StreamWrapperException;
+use lucatume\StreamWrappers\Run;
+use lucatume\StreamWrappers\StreamWrapperException;
 
 /**
  * Class Patch
  *
- * @package tad\StreamWrappers\Patches
+ * @package lucatume\StreamWrappers\Patches
  */
 abstract class Patch extends NodeVisitorAbstract
 {

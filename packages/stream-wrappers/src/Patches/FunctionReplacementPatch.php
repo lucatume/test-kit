@@ -2,18 +2,18 @@
 /**
  * Replaces calls to a set of functions with pre-determined values.
  *
- * @package tad\StreamWrappers\Patches
+ * @package lucatume\StreamWrappers\Patches
  */
 
-namespace tad\StreamWrappers\Patches;
+namespace lucatume\StreamWrappers\Patches;
 
 use PhpParser\Node;
-use tad\StreamWrappers\StreamWrapperException;
+use lucatume\StreamWrappers\StreamWrapperException;
 
 /**
  * Class FunctionReplacementPatch
  *
- * @package tad\StreamWrappers\Patches
+ * @package lucatume\StreamWrappers\Patches
  */
 class FunctionReplacementPatch extends Patch
 {

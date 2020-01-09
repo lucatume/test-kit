@@ -2,18 +2,18 @@
 /**
  * Replaces calls to `header` related functions.
  *
- * @package tad\StreamWrappers\Patches
+ * @package lucatume\StreamWrappers\Patches
  */
 
-namespace tad\StreamWrappers\Patches;
+namespace lucatume\StreamWrappers\Patches;
 
 use PhpParser\Node;
-use tad\StreamWrappers\StreamWrapperException;
+use lucatume\StreamWrappers\StreamWrapperException;
 
 /**
  * Class HeaderCallsPatch
  *
- * @package tad\StreamWrappers\Patches
+ * @package lucatume\StreamWrappers\Patches
  */
 class HeaderCallsPatch extends Patch
 {

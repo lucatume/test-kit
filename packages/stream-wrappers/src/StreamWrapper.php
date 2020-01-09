@@ -6,27 +6,28 @@
  * @author  Ignas Rudaitis <ignas.rudaitis@gmail.com>
  * @license GPL-3.0+
  *
- * @package tad\StreamWrappers
+ * @package lucatume\StreamWrappers
  */
 
-namespace tad\StreamWrappers;
+namespace lucatume\StreamWrappers;
 
 use PhpParser\Lexer;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeTraverserInterface;
 use PhpParser\Parser;
 use PhpParser\PrettyPrinter\Standard as Printer;
-use tad\StreamWrappers\Cache\CacheInterface;
-use tad\StreamWrappers\Cache\ContentsCache;
-use tad\Utils\Traits\WithTestNames;
-use function tad\functions\isDebug;
+use lucatume\StreamWrappers\Cache\CacheInterface;
+use lucatume\StreamWrappers\Cache\ContentsCache;
+use lucatume\Utils\Traits\WithTestNames;
+use function lucatume\functions\debug;
+use function lucatume\functions\isDebug;
 
 /**
  * Class Stream
  *
- * @package tad\StreamWrappers
+ * @package lucatume\StreamWrappers
  */
-abstract class StreamWrapper
+abstract class StreamWrapper implements FileStreamWrapperInterface
 {
     use WithTestNames;
 
@@ -573,6 +574,20 @@ abstract class StreamWrapper
     abstract public function getGlobalVarName();
 
     /**
+     * Enables or disables the patched contents cache.
+     *
+     * @param bool $usePatchCache Whether patched cache contents should be enabled or not.
+     *
+     * @return FileStreamWrapperInterface This instance for chaining.
+     */
+    public function usePatchCache(bool $usePatchCache): FileStreamWrapperInterface
+    {
+        $this->patchCacheEnabled = $usePatchCache;
+
+        return $this;
+    }
+
+    /**
      * Sets up the node traverser, usually to add the patches required by the stream wrapper.
      *
      * @param NodeTraverserInterface $traverser The traverser to setup.j:w
@@ -586,7 +601,7 @@ abstract class StreamWrapper
      *
      * @return Run The run result.
      */
-    abstract public function run($file);
+    abstract public function loadFile($file);
 
     /**
      * Patches the contents of a file.
@@ -601,7 +616,7 @@ abstract class StreamWrapper
         $file = static::$run->getLastLoadedFile();
         $hash = static::$run->hash();
 
-        if (!isDebug() && $this->patchCacheEnabled) {
+        if ($this->patchCacheEnabled && !isDebug()) {
             $patchedContents = static::$patchedContentsCache->getFileContentsFor($file, $hash);
         }
 
@@ -639,8 +654,10 @@ abstract class StreamWrapper
      * This method is called on replaced functions to return the replaced value.
      *
      *
-     * @param string $fn      The function fully qualified name.
-     * @param mixed  ...$args The function call arguments.
+     * @param string $fn The function fully qualified name.
+     * @param mixed ...$args The function call arguments.
+     *
+     * @return mixed The function return value, either provided by a function replacement or from the original function.
      *
      * @throws StreamWrapperException If no replacement was defined for the function.
      */
@@ -663,6 +680,9 @@ abstract class StreamWrapper
         static::$parser = new Parser\Php7(static::$lexer);
     }
 
+    /**
+     * Builds and initializes the patched contents cache, if required.
+     */
     protected function initContentsCache()
     {
         if ($this->cache instanceof CacheInterface) {
@@ -672,5 +692,30 @@ abstract class StreamWrapper
         }
 
         static::$patchedContentsCache = new ContentsCache(static::class);
+    }
+
+    /**
+     * Unsafely (w/o exception handling and sandboxing) require a file.
+     *
+     * @param string $file The absolute path to the file to require.
+     * @param array|null $definedVars An array of currently defined vars, if any.
+     *
+     * @return mixed The file include/require return value, if any.
+     */
+    protected function unsafelyRequireFile(string $file, array $definedVars = null)
+    {
+        static::$run->setLastLoadedFile($file);
+
+        if ($definedVars !== null) {
+            unset($definedVars['file'], $definedVars['definedVars']);
+            /** @noinspection NonSecureExtractUsageInspection Normal include var pass-thru will not work. */
+            extract($definedVars);
+        }
+
+        set_error_handler([$this, 'castErrorToException'], E_PARSE);
+        $result = require $file;
+        restore_error_handler();
+
+        return $result;
     }
 }

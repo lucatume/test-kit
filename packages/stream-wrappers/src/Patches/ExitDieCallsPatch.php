@@ -2,20 +2,20 @@
 /**
  * Replaces calls to the `die` or `exit` functions.
  *
- * @package tad\StreamWrappers\Patches
+ * @package lucatume\StreamWrappers\Patches
  */
 
-namespace tad\StreamWrappers\Patches;
+namespace lucatume\StreamWrappers\Patches;
 
 use PhpParser\Node;
-use tad\StreamWrappers\StreamWrapperException;
+use lucatume\StreamWrappers\StreamWrapperException;
 
 /**
  * Class ExitDieCallsPatch
  *
  * @since   TBD
  *
- * @package tad\StreamWrappers\Patches
+ * @package lucatume\StreamWrappers\Patches
  */
 class ExitDieCallsPatch extends Patch
 {

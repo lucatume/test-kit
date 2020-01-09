@@ -2,19 +2,19 @@
 /**
  * Replaces calls to the `constant` function or STRING access to constant values for a controlled set of constants.
  *
- * @package tad\StreamWrappers\Patches
+ * @package lucatume\StreamWrappers\Patches
  */
 
-namespace tad\StreamWrappers\Patches;
+namespace lucatume\StreamWrappers\Patches;
 
 use PhpParser\Node;
 use PhpParser\Node\Expr\ConstFetch;
-use tad\StreamWrappers\StreamWrapperException;
+use lucatume\StreamWrappers\StreamWrapperException;
 
 /**
  * Class ConstantAccessPatch
  *
- * @package tad\StreamWrappers\Patches
+ * @package lucatume\StreamWrappers\Patches
  */
 class ConstantAccessPatch extends Patch
 {

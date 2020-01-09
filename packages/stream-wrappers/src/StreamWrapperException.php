@@ -2,15 +2,15 @@
 /**
  * An exception thrown by a stream wrapper.
  *
- * @package tad\StreamWrappers
+ * @package lucatume\StreamWrappers
  */
 
-namespace tad\StreamWrappers;
+namespace lucatume\StreamWrappers;
 
 /**
  * Class StreamWrapperException
  *
- * @package tad\StreamWrappers
+ * @package lucatume\StreamWrappers
  */
 class StreamWrapperException extends \Exception
 {

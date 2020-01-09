@@ -2,18 +2,18 @@
 /**
  * Replaces calls to the `define` function with calls to the `define` method of the stream wrapper.
  *
- * @package tad\StreamWrappers\Patches
+ * @package lucatume\StreamWrappers\Patches
  */
 
-namespace tad\StreamWrappers\Patches;
+namespace lucatume\StreamWrappers\Patches;
 
 use PhpParser\Node;
-use tad\StreamWrappers\StreamWrapperException;
+use lucatume\StreamWrappers\StreamWrapperException;
 
 /**
  * Class DefineCallsPatch
  *
- * @package tad\StreamWrappers\Patches
+ * @package lucatume\StreamWrappers\Patches
  */
 class DefineCallsPatch extends Patch
 {
@@ -34,11 +34,16 @@ class DefineCallsPatch extends Patch
             $this->prettyPrintArgs($node->args)
         );
 
-        $callArgs = array_map( static function (Node\Arg $arg) {
-            return $arg->value->value;
-        }, $node->args);
+//        $callArgs = array_map( static function (Node\Arg $arg) {
+//            $argValue = $arg->value;
+//            if($argValue instanceof Node\Expr\ConstFetch){
+//                return $argValue->name->toCodeString();
+//            }
+//            return $argValue->value;
+//        }, $node->args);
 
-        $this->run->addReplacedConstant(...$callArgs);
+        $constName = $node->args[0]->value->value;
+        $this->run->addReplacedConstant($constName);
 
         return $this->getWrappedExpression($replace);
     }

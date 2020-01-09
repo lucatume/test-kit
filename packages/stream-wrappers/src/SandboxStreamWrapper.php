@@ -3,31 +3,31 @@
  * Loads a single file, and all the files required or included by it, in a "sandbox" environment that allows rolling
  * back side-effects.
  *
- * @package tad\StreamWrappers
+ * @package lucatume\StreamWrappers
  */
 
-namespace tad\StreamWrappers;
+namespace lucatume\StreamWrappers;
 
+use lucatume\StreamWrappers\Http\Header;
+use lucatume\StreamWrappers\MockFactories\ProphecyMockFactory;
+use lucatume\StreamWrappers\Patches\ConstantAccessPatch;
+use lucatume\StreamWrappers\Patches\DefineCallsPatch;
+use lucatume\StreamWrappers\Patches\DefinedCallsPatch;
+use lucatume\StreamWrappers\Patches\ExitDieCallsPatch;
+use lucatume\StreamWrappers\Patches\FunctionReplacementPatch;
+use lucatume\StreamWrappers\Patches\HeaderCallsPatch;
+use lucatume\StreamWrappers\Patches\IncludeRequirePatch;
+use lucatume\StreamWrappers\Patches\Patch;
 use PhpParser\NodeTraverserInterface;
 use PhpParser\NodeVisitor\CloningVisitor;
 use PhpParser\NodeVisitor\NameResolver;
-use tad\StreamWrappers\Http\Header;
-use tad\StreamWrappers\MockFactories\ProphecyMockFactory;
-use tad\StreamWrappers\Patches\ConstantAccessPatch;
-use tad\StreamWrappers\Patches\DefineCallsPatch;
-use tad\StreamWrappers\Patches\DefinedCallsPatch;
-use tad\StreamWrappers\Patches\ExitDieCallsPatch;
-use tad\StreamWrappers\Patches\FunctionReplacementPatch;
-use tad\StreamWrappers\Patches\HeaderCallsPatch;
-use tad\StreamWrappers\Patches\IncludeRequirePatch;
-use tad\StreamWrappers\Patches\Patch;
-use function tad\functions\pathJoin;
-use function tad\functions\pathNormalize;
+use function lucatume\functions\pathJoin;
+use function lucatume\functions\pathNormalize;
 
 /**
  * Class SandboxStreamWrapper
  *
- * @package tad\StreamWrappers
+ * @package lucatume\StreamWrappers
  */
 class SandboxStreamWrapper extends StreamWrapper
 {
@@ -59,7 +59,7 @@ class SandboxStreamWrapper extends StreamWrapper
      *
      * @throws StreamWrapperException If the file does not exist or there's an issue registering the wrapper.
      */
-    public function run($file)
+    public function loadFile($file)
     {
         if (! file_exists($file)) {
             throw new StreamWrapperException(sprintf('File "%s" does not exist.', $file));
@@ -77,14 +77,18 @@ class SandboxStreamWrapper extends StreamWrapper
 
         $GLOBALS[ $this->getGlobalVarName() ] = $this;
 
-        ob_start();
 
-        static::wrap();
+        $this->startWrapping();
         static::$run->setLastLoadedFile($file);
-        $this->safelyRequireFile($file);
-        static::unwrap();
-
-        static::$run->setOutput(ob_get_clean());
+        try {
+            $this->safelyRequireFile($file);
+        } catch (ExitSignal $e) {
+            static::$run->setFileExit($e->getMessage());
+        } catch (\Exception $e) {
+            $this->throwFormattedException($e);
+        } finally {
+            $this->stopWrapping();
+        }
 
 //        static::$run->snapshotEnv('after');
 
@@ -123,37 +127,26 @@ class SandboxStreamWrapper extends StreamWrapper
     /**
      * Safely include a file, attempting to gracefully handle failure.
      *
-     * @param string     $file        The path to the file to include.
+     * @param string $file The path to the file to include.
      * @param array|null $definedVars An array of variables that will be extracted to provide them as context to the
      *                                file inclusion.
      *
+     * @return mixed The file `include` return value, if any.
+     *
      * @throws StreamWrapperException An as helpful as it can get exception text.
+     * @throws ExitSignal If the code would terminate by means of an `exit` or `die` call.
      */
     protected function safelyRequireFile($file, array $definedVars = null)
     {
-        static::$run->setLastLoadedFile($file);
-
         try {
-            if ($definedVars !== null) {
-                unset($definedVars['file'], $definedVars['definedVars']);
-                /** @noinspection NonSecureExtractUsageInspection Normal include var pass-thru will not work. */
-                extract($definedVars);
-            }
-
-            set_error_handler([ $this, 'castErrorToException' ], E_PARSE);
-            $result = require $file;
-            restore_error_handler();
-
-            return $result;
-        } catch (ExitSignal $e) {
-            static::$run->setFileExit($e->getMessage());
+           return $this->unsafelyRequireFile($file,$definedVars);
         } catch (StreamWrapperException $e) {
+            $this->stopWrapping();
             // Pass thru.
             throw $e;
         } catch (\ParseError $e) {
+            $this->stopWrapping();
             $this->throwFormattedParseError($e);
-        } catch (\Exception $e) {
-            $this->throwFormattedException($e);
         }
     }
 
@@ -342,28 +335,22 @@ class SandboxStreamWrapper extends StreamWrapper
      */
     public function header($value, $replace = true, $httpResponseCode = null)
     {
-        $header = Header::make($value, $replace, $httpResponseCode, static::$run->getSentResponsCode());
+        $header = Header::make($value, $replace, $httpResponseCode, static::$run->getSentResponseCode());
         static::$run->addSentHeader($header, $replace);
-    }
-
-    /**
-     * Returns the stream wrapper las run result, if any.
-     *
-     * @return Run
-     */
-    public function getRunResult()
-    {
-        return static::$run;
     }
 
     /**
      * Sets the list of directories or files this stream wrapper should wrap.
      *
      * @param array $whiteList The list of directories or files this stream wrapper should wrap.
+     *
+     * @return FileStreamWrapperInterface This, for chaining.
      */
     public function setWhitelist(array $whiteList)
     {
         static::runLog()->setWhiteList($whiteList);
+
+        return $this;
     }
 
     /**
@@ -454,5 +441,23 @@ class SandboxStreamWrapper extends StreamWrapper
         }
 
         return $this->mockFactory;
+    }
+
+    /**
+     * Deregister the stream wrapper from the supported protocols and stop the output buffering.
+     */
+    protected function stopWrapping()
+    {
+        static::unwrap();
+        static::$run->setOutput(ob_get_clean());
+    }
+
+    /**
+     * Attach the stream wrapper to the supported protocols and start buffering the output.
+     */
+    protected function startWrapping()
+    {
+        ob_start();
+        static::wrap();
     }
 }

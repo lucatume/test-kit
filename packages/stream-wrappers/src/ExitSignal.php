@@ -2,15 +2,15 @@
 /**
  * Represents an `exit` or `die` signal thrown by the patched code.
  *
- * @package tad\StreamWrappers
+ * @package lucatume\StreamWrappers
  */
 
-namespace tad\StreamWrappers;
+namespace lucatume\StreamWrappers;
 
 /**
  * Class ExitSignal
  *
- * @package tad\StreamWrappers
+ * @package lucatume\StreamWrappers
  */
 class ExitSignal extends \Exception
 {

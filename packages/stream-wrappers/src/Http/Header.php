@@ -2,16 +2,16 @@
 /**
  * A value object representing an HTTP header.
  *
- * @package tad\StreamWrappers\Http
+ * @package lucatume\StreamWrappers\Http
  */
 
 
-namespace tad\StreamWrappers\Http;
+namespace lucatume\StreamWrappers\Http;
 
 /**
  * Class Header
  *
- * @package tad\StreamWrappers\Http
+ * @package lucatume\StreamWrappers\Http
  */
 class Header
 {

@@ -1,10 +1,10 @@
 <?php
 
-namespace tad\StreamWrappers;
+namespace lucatume\StreamWrappers;
 
 use PHPUnit\Framework\TestCase;
-use function tad\functions\data;
-use function tad\functions\isDebug;
+use function lucatume\functions\data;
+use function lucatume\functions\isDebug;
 
 class IncludedFilesStreamWrapperTest extends TestCase
 {
@@ -68,28 +68,5 @@ class IncludedFilesStreamWrapperTest extends TestCase
             data('wrap/file_2.php'),
             data('wrap/file_3.php'),
         ], $includedFiles);
-    }
-
-    /**
-     * It should correctly store and fetch cached files
-     *
-     * @test
-     * @depends should_allow_setting_code_lines_before_file
-     */
-    public function should_correctly_store_and_fetch_cached_files()
-    {
-        if (isDebug()) {
-            $this->markTestSkipped('This test will always file during debug runs.');
-        }
-
-        $file = data('wrap/file_1.php');
-
-        $wrapper = new IncludedFilesStreamWrapper;
-        $wrapper->setPatchedContentsCache(new ArrayContentsCache());
-        $code    = '$include3 = true;';
-
-        $wrapper->getIncludedFiles($file, $code);
-
-        $this->assertEquals([$file], array_keys($wrapper->getCache()->getHits()));
     }
 }
