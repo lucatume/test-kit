@@ -1,12 +1,9 @@
 <?php
 /**
- * ${CARET}
- *
- * @since TBD
+ * The API that contents cache implementation should provide.
  */
 
 namespace lucatume\StreamWrappers\Cache;
-
 
 /**
  * Class ContentsCache

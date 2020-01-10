@@ -7,14 +7,13 @@
 
 namespace lucatume\Beaker;
 
-use GuzzleHttp\Client;
+use lucatume\Beaker\Db\DbFactory;
+use lucatume\Beaker\Db\DbInterface;
 use lucatume\Beaker\Traits\WithGlobalState;
 use lucatume\StreamWrappers\FileStreamWrapperInterface;
 use lucatume\StreamWrappers\SandboxStreamWrapper;
 use lucatume\StreamWrappers\StreamWrapperException;
 use function lucatume\functions\debug;
-use function lucatume\functions\pathJoin;
-use function lucatume\functions\pathResolve;
 
 class Beaker
 {
@@ -54,20 +53,29 @@ class Beaker
      */
     protected $router;
 
+    /**
+     * The database controller for this beaker.
+     *
+     * @var Db\DbInterface
+     */
+    protected $db;
+
     /***
      * Beaker constructor.
      *
      * @param FileStreamWrapperInterface $streamWrapper The file stream wrapper that will be used to include the file.
      * @param FileRouter $router A router instance, in charge of translating request URIs into file paths.
+     * @param DbInterface $db An instance of the database abstraction object.
      */
-    public function __construct(FileStreamWrapperInterface $streamWrapper, FileRouter $router)
+    public function __construct(FileStreamWrapperInterface $streamWrapper, FileRouter $router, DbInterface $db)
     {
         $this->streamWrapper = $streamWrapper;
+        $this->rootDir = $router->getRootDir();
         $this->streamWrapper
-//            ->usePatchCache(true)
+            ->usePatchCache(true)
             ->setWhitelist([$this->rootDir]);
         $this->router = $router;
-        $this->rootDir = $router->getRootDir();
+        $this->db = $db;
     }
 
     /**
@@ -80,7 +88,8 @@ class Beaker
      */
     public static function fromDir(string $rootDir): Beaker
     {
-        return new static(new SandboxStreamWrapper, new FileRouter($rootDir));
+        $dbFactory = new DbFactory();
+        return new static(new SandboxStreamWrapper, new FileRouter($rootDir), $dbFactory->forDir($rootDir));
     }
 
     /**
@@ -123,7 +132,7 @@ class Beaker
     {
         $method = strtoupper($method);
 
-        if(!in_array($method,static::$supportedMethods,true)){
+        if (!in_array($method, static::$supportedMethods, true)) {
             $method = 'GET';
         }
 

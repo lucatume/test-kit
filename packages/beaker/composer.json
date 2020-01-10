@@ -25,11 +25,10 @@
   ],
   "require": {
     "php": ">=7.0",
+    "ext-pdo": "*",
     "composer/installers": "~1.0",
     "wordpress/wordpress": "dev-master",
     "psr/http-message": "^1.0",
-    "psr/cache": "^1.0",
-    "cache/array-adapter": "^1.0",
     "sebastian/global-state": ">=1.1.1"
   },
   "require-dev": {

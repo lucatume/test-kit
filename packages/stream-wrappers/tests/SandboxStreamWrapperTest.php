@@ -113,7 +113,7 @@ class SandboxStreamWrapperTest extends TestCase
         $wrapper = new SandboxStreamWrapper();
         $wrapper->setWhitelist([data('wrap')]);
         $wrapper->setContextDefinedConstants(['TEST_CONST_ZERO' => 'YES']);
-        $run  = $wrapper->loadFile($file);
+        $run = $wrapper->loadFile($file);
 
         $this->assertEquals(
             ['CONST_ONE' => 'ONE', 'CONST_TWO' => 'TWO', 'CONST_THREE' => 'THREE', 'CONST_FOUR' => 'FOUR'],
@@ -137,7 +137,7 @@ class SandboxStreamWrapperTest extends TestCase
 
         $wrapper = new SandboxStreamWrapper();
         $wrapper->setWhitelist([data('wrap')]);
-        $run  = $wrapper->loadFile($file);
+        $run = $wrapper->loadFile($file);
 
         $this->assertTrue($run->fileDidExit());
         $this->assertEquals("You cannot do that.\n", $run->getOutput());
@@ -155,7 +155,7 @@ class SandboxStreamWrapperTest extends TestCase
 
         $wrapper = new SandboxStreamWrapper();
         $wrapper->setWhitelist([data('wrap')]);
-        $run  =$wrapper->loadFile($file);
+        $run = $wrapper->loadFile($file);
 
         $this->assertEquals([
             'X-Test-Header-1' => ['one'],
@@ -218,5 +218,67 @@ class SandboxStreamWrapperTest extends TestCase
         $lastLoadedFilePatchedCode = $run->getLastLoadedFilePatchedCode();
 
         $this->assertStringEqualsFile($file, $lastLoadedFilePatchedCode);
+    }
+
+    public function classLikeDefinitionsDataSet()
+    {
+        return [
+            'global_class' => [
+                $file = data('wrap/file_defining_global_class.php'),
+                $expected = data('wrap/expected/file_defining_global_class.php')
+            ],
+            'namespaced_class' => [
+                $file = data('wrap/file_defining_namespaced_class.php'),
+                $expected = data('wrap/expected/file_defining_namespaced_class.php')
+            ],
+            'global_interface' => [
+                $file = data('wrap/file_defining_global_interface.php'),
+                $expected = data('wrap/expected/file_defining_global_interface.php')
+            ],
+            'namespaced_interface' => [
+                $file = data('wrap/file_defining_namespaced_interface.php'),
+                $expected = data('wrap/expected/file_defining_namespaced_interface.php')
+            ],
+            'global_trait' => [
+                $file = data('wrap/file_defining_global_trait.php'),
+                $expected = data('wrap/expected/file_defining_global_trait.php')
+            ],
+            'namespaced_trait' => [
+                $file = data('wrap/file_defining_namespaced_trait.php'),
+                $expected = data('wrap/expected/file_defining_namespaced_trait.php')
+            ]
+        ];
+    }
+
+    /**
+     * It should wrap class-like definitions in exists checks
+     *
+     * @test
+     * @dataProvider classLikeDefinitionsDataSet
+     */
+    public function should_wrap_class_like_definitions_in_exists_checks($file, $expected)
+    {
+        $wrapper = new SandboxStreamWrapper();
+        $wrapper->setWhitelist([data('wrap')]);
+        $run = $wrapper->loadFile($file);
+        $lastLoadedFilePatchedCode = $run->getLastLoadedFilePatchedCode();
+
+        $this->assertStringEqualsFile($expected, $lastLoadedFilePatchedCode);
+    }
+
+    /**
+     * It should wrap function definition in exists check
+     *
+     * @test
+     * @dataProvider functionDefinitionsDataSet
+     */
+    public function should_wrap_function_definition_in_exists_check()
+    {
+        $wrapper = new SandboxStreamWrapper();
+        $wrapper->setWhitelist([data('wrap')]);
+        $run = $wrapper->loadFile($file);
+        $lastLoadedFilePatchedCode = $run->getLastLoadedFilePatchedCode();
+
+        $this->assertStringEqualsFile($expected, $lastLoadedFilePatchedCode);
     }
 }

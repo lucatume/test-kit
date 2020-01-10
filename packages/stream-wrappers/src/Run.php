@@ -434,13 +434,18 @@ class Run implements FileStreamWrappingRunResultInterface
     /**
      * Returns the lis of functions replaced in the context of the current stream wrapper run.
      *
-     * @var array<string,mixed>
+     * @return array<string,mixed>
      */
     public function getReplacedFunctions()
     {
         return $this->replacedFunctions;
     }
 
+    /**
+     * Returns the run hash, a product of the run context.
+     *
+     * @return string The run hash.
+     */
     public function hash()
     {
         return $this->hash;

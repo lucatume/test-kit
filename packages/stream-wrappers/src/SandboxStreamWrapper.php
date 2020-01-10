@@ -10,6 +10,7 @@ namespace lucatume\StreamWrappers;
 
 use lucatume\StreamWrappers\Http\Header;
 use lucatume\StreamWrappers\MockFactories\ProphecyMockFactory;
+use lucatume\StreamWrappers\Patches\ClassLikeDefinitionPatch;
 use lucatume\StreamWrappers\Patches\ConstantAccessPatch;
 use lucatume\StreamWrappers\Patches\DefineCallsPatch;
 use lucatume\StreamWrappers\Patches\DefinedCallsPatch;
@@ -61,13 +62,13 @@ class SandboxStreamWrapper extends StreamWrapper
      */
     public function loadFile($file)
     {
-        if (! file_exists($file)) {
+        if (!file_exists($file)) {
             throw new StreamWrapperException(sprintf('File "%s" does not exist.', $file));
         }
 
         $this->initSharedProps();
 
-        if (! empty(static::$run->getContextDefinedConstants())) {
+        if (!empty(static::$run->getContextDefinedConstants())) {
             foreach (static::$run->getContextDefinedConstants() as $key => $value) {
                 $this->define($key, $value, false);
             }
@@ -75,7 +76,7 @@ class SandboxStreamWrapper extends StreamWrapper
 
 //        static::$run->snapshotEnv('before');
 
-        $GLOBALS[ $this->getGlobalVarName() ] = $this;
+        $GLOBALS[$this->getGlobalVarName()] = $this;
 
 
         $this->startWrapping();
@@ -101,9 +102,9 @@ class SandboxStreamWrapper extends StreamWrapper
     /**
      * A replacement for the `define` functions that will set environment vars instead and log the constant definition.
      *
-     * @param string $key   The defined constant key.
-     * @param mixed  $value The defined constant value.
-     * @param bool   $track Whether the definition of this virtual constant should be tracked or not.
+     * @param string $key The defined constant key.
+     * @param mixed $value The defined constant value.
+     * @param bool $track Whether the definition of this virtual constant should be tracked or not.
      *
      * @return bool Whether the "virtual" constant was correctly defined or not.
      */
@@ -125,6 +126,15 @@ class SandboxStreamWrapper extends StreamWrapper
     }
 
     /**
+     * Attach the stream wrapper to the supported protocols and start buffering the output.
+     */
+    protected function startWrapping()
+    {
+        ob_start();
+        static::wrap();
+    }
+
+    /**
      * Safely include a file, attempting to gracefully handle failure.
      *
      * @param string $file The path to the file to include.
@@ -139,7 +149,7 @@ class SandboxStreamWrapper extends StreamWrapper
     protected function safelyRequireFile($file, array $definedVars = null)
     {
         try {
-           return $this->unsafelyRequireFile($file,$definedVars);
+            return $this->unsafelyRequireFile($file, $definedVars);
         } catch (StreamWrapperException $e) {
             $this->stopWrapping();
             // Pass thru.
@@ -148,6 +158,15 @@ class SandboxStreamWrapper extends StreamWrapper
             $this->stopWrapping();
             $this->throwFormattedParseError($e);
         }
+    }
+
+    /**
+     * Deregister the stream wrapper from the supported protocols and stop the output buffering.
+     */
+    protected function stopWrapping()
+    {
+        static::unwrap();
+        static::$run->setOutput(ob_get_clean());
     }
 
     /**
@@ -207,8 +226,8 @@ class SandboxStreamWrapper extends StreamWrapper
         }
 
         $trace = $e->getTrace();
-        $last  = reset($trace);
-        $line  = $last['line'];
+        $last = reset($trace);
+        $line = $last['line'];
         throw new StreamWrapperException(
             sprintf(
                 "%s; patched code:\n%s\n\n%s",
@@ -230,7 +249,7 @@ class SandboxStreamWrapper extends StreamWrapper
     public function defined($const)
     {
         return array_key_exists($const, static::$run->getContextDefinedConstants())
-               || array_key_exists($const, static::$run->getDefinedConstants());
+            || array_key_exists($const, static::$run->getDefinedConstants());
     }
 
     /**
@@ -247,8 +266,8 @@ class SandboxStreamWrapper extends StreamWrapper
     /**
      * Includes a file, replacement for the `includeOnce` function.
      *
-     * @param string              $file        The path to the file to include.
-     * @param string              $cwd         The current working directory, to resolve relative paths.
+     * @param string $file The path to the file to include.
+     * @param string $cwd The current working directory, to resolve relative paths.
      * @param array<string,mixed> $definedVars The variables defined in the context including the file.
      *
      * @return mixed The included file return value, if any, or `true` if the file was already included..
@@ -263,14 +282,15 @@ class SandboxStreamWrapper extends StreamWrapper
     /**
      * Includes a file, replacement for the `include` function.
      *
-     * @param string              $file        The path to the file to include.
-     * @param string              $cwd         The current working directory, to resolve relative paths.
+     * @param string $file The path to the file to include.
+     * @param string $cwd The current working directory, to resolve relative paths.
      * @param array<string,mixed> $definedVars The variables defined in the context including the file.
-     * @param bool                $once        Whether to include this file once or not.
+     * @param bool $once Whether to include this file once or not.
      *
      * @return mixed The included file return value, if any, or `true` if the file was already included..
      *
      * @throws StreamWrapperException If the file to include does not exist.
+     * @throws ExitSignal If the included file calls the `die` or `exit` function.
      */
     public function includeFile($file, $cwd, array $definedVars = [], $once = false)
     {
@@ -280,7 +300,7 @@ class SandboxStreamWrapper extends StreamWrapper
             $file = $filename;
         }
 
-        if (! file_exists($file)) {
+        if (!file_exists($file)) {
             throw new StreamWrapperException('Including file "' . $file . '" but it does not exist.');
         }
 
@@ -307,8 +327,8 @@ class SandboxStreamWrapper extends StreamWrapper
             static::$run->getDefinedConstants()
         );
 
-        if (isset($controlledConstants[ $const ])) {
-            return $controlledConstants[ $const ];
+        if (isset($controlledConstants[$const])) {
+            return $controlledConstants[$const];
         }
 
         return null;
@@ -329,8 +349,8 @@ class SandboxStreamWrapper extends StreamWrapper
     /**
      * Drop-in replacement for the `header` function.
      *
-     * @param string   $value            The header value.
-     * @param bool     $replace          Whether this header replaces a previous version of it or not.
+     * @param string $value The header value.
+     * @param bool $replace Whether this header replaces a previous version of it or not.
      * @param int|null $httpResponseCode The header response code; ignored if the `$value` is empty.
      */
     public function header($value, $replace = true, $httpResponseCode = null)
@@ -346,7 +366,7 @@ class SandboxStreamWrapper extends StreamWrapper
      *
      * @return FileStreamWrapperInterface This, for chaining.
      */
-    public function setWhitelist(array $whiteList)
+    public function setWhitelist(array $whiteList): FileStreamWrapperInterface
     {
         static::runLog()->setWhiteList($whiteList);
 
@@ -356,10 +376,10 @@ class SandboxStreamWrapper extends StreamWrapper
     /**
      * Casts `E_PARSE` errors to exceptions.
      *
-     * @param int      $errorNumber The error code.
-     * @param string   $message     The error message.
-     * @param string   $file        The file path.
-     * @param null|int $line        The line number.
+     * @param int $errorNumber The error code.
+     * @param string $message The error message.
+     * @param string $file The file path.
+     * @param null|int $line The line number.
      *
      * @return bool `true` to indicate the error is handled.
      *
@@ -380,28 +400,34 @@ class SandboxStreamWrapper extends StreamWrapper
     }
 
     /**
-     * Returns the cache instance used by the stream wrapper.
-     *
-     * @return ContentsCache The instance cache used by the stream wrapper.
-     */
-    public function getCache()
-    {
-        return static::$patchedContentsCache;
-    }
-
-    /**
      * Replaces a function to return the specified value in wrapped files.
      *
      * @param string $functionName The fully-qualified name of the function to replace.
      * @param mixed $returnValue The value that will be returned when the function is called.
+     *
+     * @return \Closure The function replaces with a mock.
      */
     public function replaceFn($functionName, $returnValue)
     {
-        $mock =  $this->mockFactory()->replaceFunction($functionName, $returnValue);
+        $mock = $this->mockFactory()->replaceFunction($functionName, $returnValue);
 
         static::runLog()->addReplacedFunction($functionName, $mock);
 
         return $mock;
+    }
+
+    /**
+     * Returns the current mock factory or builds a new one.
+     *
+     * @return ProphecyMockFactory The current mock factory instance or a freshly built one, if not set.
+     */
+    protected function mockFactory()
+    {
+        if ($this->mockFactory === null) {
+            $this->mockFactory = new ProphecyMockFactory();
+        }
+
+        return $this->mockFactory;
     }
 
     /**
@@ -427,37 +453,6 @@ class SandboxStreamWrapper extends StreamWrapper
         $traverser->addVisitor(new ExitDieCallsPatch($var, static::$run, static::$parser, static::$printer));
         $traverser->addVisitor(new HeaderCallsPatch($var, static::$run, static::$parser, static::$printer));
         $traverser->addVisitor(new FunctionReplacementPatch($var, static::$run, static::$parser, static::$printer));
-    }
-
-    /**
-     * Returns the current mock factory or builds a new one.
-     *
-     * @return ProphecyMockFactory The current mock factory instance or a freshly built one, if not set.
-     */
-    protected function mockFactory()
-    {
-        if ($this->mockFactory === null) {
-            $this->mockFactory = new ProphecyMockFactory();
-        }
-
-        return $this->mockFactory;
-    }
-
-    /**
-     * Deregister the stream wrapper from the supported protocols and stop the output buffering.
-     */
-    protected function stopWrapping()
-    {
-        static::unwrap();
-        static::$run->setOutput(ob_get_clean());
-    }
-
-    /**
-     * Attach the stream wrapper to the supported protocols and start buffering the output.
-     */
-    protected function startWrapping()
-    {
-        ob_start();
-        static::wrap();
+        $traverser->addVisitor(new ClassLikeDefinitionPatch($var, static::$run, static::$parser, static::$printer));
     }
 }

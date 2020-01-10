@@ -65,7 +65,7 @@ abstract class StreamWrapper implements FileStreamWrapperInterface
     /**
      * The contents cache shared by all stream wrappers.
      *
-     * @var ContentsCache
+     * @var CacheInterface
      */
     protected static $patchedContentsCache;
 
@@ -102,7 +102,7 @@ abstract class StreamWrapper implements FileStreamWrapperInterface
      *
      * @var bool
      */
-    protected $patchCacheEnabled = false;
+    protected static $patchCacheEnabled = false;
 
     /**
      * The current object cache instance.
@@ -582,7 +582,7 @@ abstract class StreamWrapper implements FileStreamWrapperInterface
      */
     public function usePatchCache(bool $usePatchCache): FileStreamWrapperInterface
     {
-        $this->patchCacheEnabled = $usePatchCache;
+        static::$patchCacheEnabled = $usePatchCache;
 
         return $this;
     }
@@ -616,7 +616,7 @@ abstract class StreamWrapper implements FileStreamWrapperInterface
         $file = static::$run->getLastLoadedFile();
         $hash = static::$run->hash();
 
-        if ($this->patchCacheEnabled && !isDebug()) {
+        if (static::$patchCacheEnabled && !isDebug()) {
             $patchedContents = static::$patchedContentsCache->getFileContentsFor($file, $hash);
         }
 
