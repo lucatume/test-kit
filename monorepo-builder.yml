@@ -24,4 +24,4 @@ parameters:
 
   # Map this repository directories to the respective repositories.
   directories_to_repositories:
-    lucatume/utils: 'git@github.com:lucatume/utils.git'
+    packages/utils: 'git@github.com:lucatume/utils.git'
