@@ -24,6 +24,4 @@ parameters:
 
   # Map this repository directories to the respective repositories.
   directories_to_repositories:
-    packages/first-package: 'file:///Users/lucatume/Desktop/lucatume/mr-first-package.git'
-    packages/second-package: 'file:///Users/lucatume/Desktop/lucatume/mr-second-package.git'
-    packages/stream-wrappers: 'file:///Users/lucatume/Desktop/lucatume/mr-second-package.git'
+    lucatume/utils: 'git@github.com:lucatume/utils.git'

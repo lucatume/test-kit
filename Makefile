@@ -1,11 +1,7 @@
-packages = utils stream-wrappers
+packages = utils
 
 _build/containers/parallel-lint/id:
 	docker build --iidfile _build/containers/parallel-lint/id --tag lucatume/parallel-lint:5.6 _build/containers/parallel-lint
-
-.PHONY: cs_fix
-cs_fix:
-	vendor/bin/phpcbf --colors -p --standard=phpcs.xml $(SRC) --ignore=src/data,src/includes,src/tad/scripts -s src tests
 
 .PHONY: $(packages)
 $(packages): %:
